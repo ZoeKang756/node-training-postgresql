@@ -20,6 +20,13 @@ const resultHeader = {
             message: message
         })
     },
+    code_404:function(res, message = "無此網站路由")
+    {
+        res.status(404).json({
+            status : "failed",
+            message: message
+        })
+    },
     code_409:function(res, message = "資料重複"){
         res.status(409).json({
             status : "failed",

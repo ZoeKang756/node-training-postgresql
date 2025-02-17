@@ -8,6 +8,7 @@ const cors = require('cors')
 const app = express()
 const creditPackageRouter = require('./routes/creditPackage')
 const coachSkillRouter = require('./routes/coachSkill')
+const resultHeader = require('./utils/resultHeader');
 
 app.use(cors())
 app.use(express.json())
@@ -15,13 +16,8 @@ app.use(express.urlencoded({ extended: false }))
 
 app.use('/api/credit-package',creditPackageRouter )
 app.use('/api/coaches/skill',coachSkillRouter )
-
-
 app.use((req,res,next)=>{
-    res.status(404).json({
-      status: "failed",
-      message: "無此網站路由",
-    })
+   resultHeader.code_404(res)
 })
 
 const server = http.createServer(app)
