@@ -1,34 +1,30 @@
+
 require("dotenv").config()
+const express = require('express')
 const http = require("http")
 const AppDataSource = require("./db")
+const cors = require('cors')
 
-const requestListener = async (req, res) => {
-  const headers = {}
-  let body = ""
-  req.on("data", (chunk) => {
-    body += chunk
-  })
+const app = express()
+const creditPackageRouter = require('./routes/creditPackage')
+const coachSkillRouter = require('./routes/coachSkill')
 
-  if (req.url === "/api/credit-package" && req.method === "GET") {
-    
-  } else if (req.url === "/api/credit-package" && req.method === "POST") {
-    
-  } else if (req.url.startsWith("/api/credit-package/") && req.method === "DELETE") {
-    
-  } else if (req.method === "OPTIONS") {
-    res.writeHead(200, headers)
-    res.end()
-  } else {
-    res.writeHead(404, headers)
-    res.write(JSON.stringify({
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+
+app.use('/api/credit-package',creditPackageRouter )
+app.use('/api/coaches/skill',coachSkillRouter )
+
+
+app.use((req,res,next)=>{
+    res.status(404).json({
       status: "failed",
       message: "無此網站路由",
-    }))
-    res.end()
-  }
-}
+    })
+})
 
-const server = http.createServer(requestListener)
+const server = http.createServer(app)
 
 async function startServer() {
   await AppDataSource.initialize()

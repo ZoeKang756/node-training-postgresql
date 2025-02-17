@@ -1,7 +1,7 @@
 {
   "name": "db-migrate-startkit",
   "version": "1.0.0",
-  "description": "",
+  "description": "- 使用 Node.js 原生 HTTP 模組建立 API 伺服器\r - 使用 TypeORM 操作 PostgreSQL 資料庫\r - 支援 API CRUD 操作",
   "main": "index.js",
   "scripts": {
     "start": "docker compose --env-file .env up -d --build",
@@ -11,9 +11,12 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
-    "typeorm": "^0.3.20",
+    "cors": "^2.8.5",
+    "cros": "^1.0.1",
     "dotenv": "^16.4.5",
-    "pg": "^8.11.3"
+    "express": "^4.21.2",
+    "pg": "^8.11.3",
+    "typeorm": "^0.3.20"
   },
   "author": "HexSchool",
   "license": "ISC",
