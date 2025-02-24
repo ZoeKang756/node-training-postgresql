@@ -15,7 +15,7 @@ app.set('port', port)
 
 const server = http.createServer(app)
 
-function onError (error) {
+function onError(error) {
   if (error.syscall !== 'listen') {
     throw error
   }

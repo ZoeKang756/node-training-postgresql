@@ -25,8 +25,7 @@ module.exports = new EntitySchema({
       },
       profile_image_url: {
         type: 'varchar',
-        length: 2048,
-        nullable: false
+        length: 2048
       },
       created_at: {
         type: "timestamp",

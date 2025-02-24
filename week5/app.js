@@ -6,6 +6,10 @@ const pinoHttp = require('pino-http')
 const logger = require('./utils/logger')('App')
 const creditPackageRouter = require('./routes/creditPackage')
 const skillRouter = require('./routes/skill')
+const userRouter = require('./routes/user')
+const adminRouter = require('./routes/admin')
+const coachRouter = require('./routes/coach')
+
 const resultHeader = require('./utils/resultHeader');
 
 const app = express()
@@ -29,6 +33,9 @@ app.get('/healthcheck', (req, res) => {
 })
 app.use('/api/credit-package', creditPackageRouter)
 app.use('/api/coaches/skill', skillRouter)
+app.use('/api/user', userRouter)
+app.use('/api/admin', adminRouter)
+app.use('/api/coaches', coachRouter)
 
 app.use((req,res,next)=>{
   resultHeader(res, 404, 'failed', {message:"無此網站路由"})
