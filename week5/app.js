@@ -31,13 +31,13 @@ app.use('/api/credit-package', creditPackageRouter)
 app.use('/api/coaches/skill', skillRouter)
 
 app.use((req,res,next)=>{
-  resultHeader.code_404(res)
+  resultHeader(res, 404, 'failed', {message:"無此網站路由"})
 })
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   req.log.error(err)
-  resultHeader.code_500(res)
+  resultHeader(res, 500, 'failed', {message:"伺服器錯誤"})
 })
 
 module.exports = app

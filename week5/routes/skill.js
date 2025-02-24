@@ -12,7 +12,7 @@ router.get('/',async (req, res, next)=>{
       const skill = await dataSource.getRepository("Skill").find({
           select: ["id", "name"]
       })
-      resultHeader.code_200_with_data(res,skill)
+      resultHeader(res, 200, 'success', {data:skill})
 
     } catch (error) {
         logger.error(error)
@@ -28,7 +28,7 @@ router.post('/',async (req, res, next)=>{
             
       if(validCheck.isUndefined(name) || validCheck.isNotValidString(name,50))
       {
-          resultHeader.code_400(res)
+          resultHeader(res, 400, 'failed', {message:"欄位未填寫正確"})
           return 
       }
     
@@ -38,7 +38,7 @@ router.post('/',async (req, res, next)=>{
 
       if(skillResult.length > 0)
       {
-          resultHeader.code_409(res)
+          resultHeader(res, 409, 'failed', {message:"資料重複"})
           return
       }
 
@@ -46,7 +46,7 @@ router.post('/',async (req, res, next)=>{
               name
       })
       const result = await skillRepo.save(newSkill)
-      resultHeader.code_200_with_data(res, result)
+      resultHeader(res, 200, 'success', {data:result})
 
     } catch (error) {
         logger.error(error)
@@ -62,18 +62,18 @@ router.delete('/:skillId?',async (req, res, next)=>{
     
       // 檢查欄位
       if (validCheck.isUndefined(skillId) || validCheck.isNotValidString(skillId)) {
-          resultHeader.code_400(res)
+          resultHeader(res, 400, 'failed', {message:"欄位未填寫正確"})           
           return
       }
 
       // 刪除資料
       const result = await dataSource.getRepository('Skill').delete(skillId)
       if (result.affected === 0) {
-          resultHeader.code_400(res, 'ID錯誤')
+          resultHeader(res, 400, 'failed', {message:"ID錯誤"})    
           return
       }
 
-      resultHeader.code_200(res)
+      resultHeader(res, 200)
 
       
     } catch (error) {

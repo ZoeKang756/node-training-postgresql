@@ -12,7 +12,7 @@ router.get('/',async (req, res, next)=>{
         const packages = await dataSource.getRepository("CreditPackage").find({
             select: ["id", "name", "credit_amount", "price"]
         })
-        resultHeader.code_200_with_data(res,packages)
+        resultHeader(res, 200, 'success', {data:packages})
 
     } catch (error) {
         logger.error(error)
@@ -25,12 +25,13 @@ router.get('/',async (req, res, next)=>{
 router.post('/',async (req, res, next)=>{
 
     try {
-
+        // 解析接收資料
         const{name, credit_amount, price} = req.body
-               
+          
+        // 驗證資料正確性
         if(validCheck.isUndefined(name) || validCheck.isNotValidString(name,50) || validCheck.isUndefined(credit_amount) || validCheck.isNotValidInteger(credit_amount) ||  validCheck.isUndefined(price) || validCheck.isNotValidNumeric(price))
         {
-            resultHeader.code_400(res)
+            resultHeader(res, 400, 'failed', {message:"欄位未填寫正確"})
             return 
         }
        
@@ -40,7 +41,7 @@ router.post('/',async (req, res, next)=>{
     
         if(packageData.length > 0)
         {
-            resultHeader.code_409(res)
+            resultHeader(res, 409, 'failed', {message:"資料重複"})
             return
         }
 
@@ -48,7 +49,7 @@ router.post('/',async (req, res, next)=>{
                 name,credit_amount,price
         })
         const result = await creditPackageRepo.save(newCreditPackage)
-        resultHeader.code_200_with_data(res, result)
+        resultHeader(res, 200, 'success', {data:result})
  
     } catch (error) {
         logger.error(error)
@@ -64,18 +65,17 @@ router.delete('/:creditPackageId?',async (req, res, next)=>{
        
         // 檢查欄位
         if (validCheck.isUndefined(creditPackageId) || validCheck.isNotValidString(creditPackageId)) {
-            resultHeader.code_400(res)
+            resultHeader(res, 400, 'failed', {message:"欄位未填寫正確"})         
             return
         }
 
         // 刪除資料
         const result = await dataSource.getRepository('CreditPackage').delete(creditPackageId)
-        if (result.affected === 0) {
-            resultHeader.code_400(res, 'ID錯誤')
+        if (result.affected === 0) {           
+            resultHeader(res, 400, 'failed', {message:"ID錯誤"})
             return
         }
-
-        resultHeader.code_200(res)
+        resultHeader(res, 200)
 
         
     } catch (error) {
