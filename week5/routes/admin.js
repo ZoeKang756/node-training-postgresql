@@ -129,6 +129,10 @@ router.put('/coaches/courses/:courseId', async (req, res, next) => {
         const findCourse = await courseRepo.findOne({
             where: { id: courseId }
         })
+        if (!findCourse) {
+            resultHeader(res, 400, 'failed', { message: '該課程不存在' })
+            return
+        }
 
         //--檢查skill_id--// 
         const skillRepo = dataSource.getRepository('Skill')
