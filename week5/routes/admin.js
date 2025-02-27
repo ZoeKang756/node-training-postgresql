@@ -11,6 +11,7 @@ const User = require('../entities/User');
 
 // [POST] 新增教練課程資料
 router.post('/coaches/courses', async (req, res, next) => {
+
     const { user_id, skill_id, name, description, start_at, end_at, max_participants, meeting_url } = req.body
 
     try {
@@ -61,7 +62,7 @@ router.post('/coaches/courses', async (req, res, next) => {
         }
 
         //--檢查教練是否有該技能--//
-        const coachSkillRepo = dataSource.getRepository('CoachSkill')
+        /*const coachSkillRepo = dataSource.getRepository('CoachSkill')
         const findCoachSkill = await coachSkillRepo.find({
             where: { skill_id: skill_id, coach_id: user_id }
         })
@@ -69,7 +70,7 @@ router.post('/coaches/courses', async (req, res, next) => {
         if (!findCoachSkill.length) {
             resultHeader(res, 400, 'failed', { message: '教練無相關技能' })
             return
-        }
+        }*/
 
 
         const courseRepo = dataSource.getRepository('Course')
@@ -83,7 +84,7 @@ router.post('/coaches/courses', async (req, res, next) => {
             max_participants,
             meeting_url
         })
-        const result = courseRepo.save(newCourse)
+        const result = await courseRepo.save(newCourse)
         resultHeader(res, 201, 'success', { data: { course: result } })
 
     } catch (error) {
