@@ -5,10 +5,10 @@ const pinoHttp = require('pino-http')
 
 const logger = require('./utils/logger')('App')
 const creditPackageRouter = require('./routes/creditPackage')
+const coachRouter = require('./routes/coaches')
 const skillRouter = require('./routes/skill')
-const userRouter = require('./routes/user')
+const usersRouter = require('./routes/users')
 const adminRouter = require('./routes/admin')
-const coachRouter = require('./routes/coach')
 
 const resultHeader = require('./utils/resultHeader');
 
@@ -33,7 +33,7 @@ app.get('/healthcheck', (req, res) => {
 })
 app.use('/api/credit-package', creditPackageRouter)
 app.use('/api/coaches/skill', skillRouter)
-app.use('/api/user', userRouter)
+app.use('/api/users', usersRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/coaches', coachRouter)
 
@@ -43,7 +43,7 @@ app.use((req,res,next)=>{
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  req.log.error(err)
+  logger.error(err)
   resultHeader(res, 500, 'failed', {message:"伺服器錯誤"})
 })
 
