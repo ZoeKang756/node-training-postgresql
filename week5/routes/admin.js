@@ -18,7 +18,7 @@ router.post('/coaches/courses', async (req, res, next) => {
 
         // 驗證資料正確性  
         const errMsg = []
-        if (validCheck.isNotUUID(user_id) || validCheck.isNotString(user_id)) errMsg.push('技能id錯誤')
+        if (validCheck.isNotUUID(user_id) || validCheck.isNotString(user_id)) errMsg.push('使用者id錯誤')
         if (validCheck.isNotUUID(skill_id) || validCheck.isNotString(skill_id)) errMsg.push('專長ID錯誤')
         if (validCheck.isNotString(name, 100)) errMsg.push('課程名稱為必填,長度100')
         if (validCheck.isNotString(description)) errMsg.push('課程介紹為必填')
