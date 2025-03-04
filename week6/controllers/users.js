@@ -1,11 +1,13 @@
 const bcrypt = require('bcrypt')
-
+const { IsNull } = require('typeorm')
 const config = require('../config/index')
 const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('UsersController')
 const generateJWT = require('../utils/generateJWT')
 const validCheck = require('../utils/validCheck')
 const resultHeader = require('../utils/resultHeader');
+const CreditPackages = require('../entities/CreditPackages')
+const User = require('../entities/User')
 
 async function postSignup(req, res, next) {
     try {
@@ -239,12 +241,101 @@ async function putPassword(req, res, next) {
     }
 }
 
+async function getCreditPackages(req, res, next) {
+    try {
 
+        const { id } = req.user
+        const creditPurchaseRepo = dataSource.getRepository('CreditPurchase')
+        const findCreditPurchase = await creditPurchaseRepo.find({ where: { user_id: id }, relations: { CreditPackage: true } })
+
+
+        const purchaseData = []
+        findCreditPurchase.forEach(item => {
+            purchaseData.push({
+                purchased_credits: item.purchased_credits,
+                price_paid: item.price_paid,
+                name: item.CreditPackage.name,
+                purchase_at: item.purchase_at,
+            })
+        })
+
+        resultHeader(res, 200, 'success', { data: purchaseData })
+
+
+    } catch (error) {
+        logger.error(error)
+        next(error)
+    }
+}
+
+async function getBookingCourses(req, res, next) {
+    try {
+        const { id } = req.user
+        const courseBookingRepo = dataSource.getRepository('CourseBooking')
+        const findCourseBooking = await courseBookingRepo.find({ where: { user_id: id, cancelled_at: IsNull()}, relations: { Course: true, User: true } })
+
+        const usedBookingCount = await courseBookingRepo.count({
+            where: {
+                user_id: id,
+                cancelled_at: IsNull()
+            }
+        })
+
+
+        const creditPurchaseRepo = dataSource.getRepository('CreditPurchase')
+        const userCreditSum = await creditPurchaseRepo.sum('purchased_credits', {
+            user_id: id
+        })
+
+        // 剩餘堂數
+        const credit_remain = userCreditSum - usedBookingCount
+
+        // 已使用堂數
+        const credit_usage = usedBookingCount
+
+        const bookingData = []
+        findCourseBooking.forEach(item => {
+            // check status:TODO
+            const start_date = new Date(item.Course.start_at);
+            const end_date = new Date(item.Course.end_at);
+
+            let item_status = 'PENDING'
+
+            if (start_date.getTime() < Date.now() && end_date.getTime() > Date.now()) {
+                item_status = 'PROGRESS'
+            } else if (end_date.getTime() <= Date.now()) {
+                item_status = 'COMPLETED'
+            }
+
+
+
+            bookingData.push({
+                name: item.Course.name,
+                course_id: item.course_id,
+                coach_name: item.User.name,
+                status: item_status,
+                start_at: item.Course.start_at,
+                end_at: item.Course.end_at,
+                meeting_url: item.meeting_url
+            })
+        })
+
+        resultHeader(res, 200, 'success', { data: { credit_remain, credit_usage, course_booking: bookingData } })
+
+
+    } catch (error) {
+        logger.error(error)
+        next(error)
+    }
+}
 
 module.exports = {
     postSignup,
     postLogin,
     getProfile,
     putProfile,
-    putPassword
+    putPassword,
+    getCreditPackages,
+    getBookingCourses
+
 }

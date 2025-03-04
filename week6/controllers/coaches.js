@@ -200,9 +200,21 @@ async function getCoachDetail(req, res, next) {
     }
 }
 
+// 取得指定教練課程列表
+async function getCoursesByCoachId(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)        
+    }
+}
+
+
+
 module.exports = {
     getCoaches,
     getCoachesV2,
-    getCoachDetail
-
+    getCoachDetail,
+    getCoursesByCoachId,
 }

@@ -31,5 +31,5 @@ module.exports = new EntitySchema({
       createDate: true,
       nullable: false
     }
-  },
+  }
 })

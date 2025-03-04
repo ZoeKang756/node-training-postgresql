@@ -261,10 +261,64 @@ async function postCoach(req, res, next) {
     }
 }
 
+// 取得教練自己的課程列表
+async function getCoachOwnCourses(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)        
+    }
+}
+
+// 取得教練自己的課程詳細資料
+async function getCoachOwnCourseDetail(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)        
+    }
+}
+
+// 變更教練資料
+async function putCoachProfile(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)        
+    }
+}
+
+// 取得教練自己的詳細資料
+async function getCoachSelfDetail(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)        
+    }
+}
+
+// 取得教練自己的月營收資料
+async function getCoachSelfRevenue(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)        
+    }
+}
+
 
 module.exports = {
     postCoachCourse,
     putCoachCourse,
-    postCoach
-
+    postCoach,
+    getCoachOwnCourses,
+    getCoachOwnCourseDetail,
+    putCoachProfile,
+    getCoachSelfDetail,
+    getCoachSelfRevenue
 }
