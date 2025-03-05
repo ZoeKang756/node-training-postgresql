@@ -3,6 +3,7 @@ const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('CoachController')
 const validCheck = require('../utils/validCheck');
 const resultHeader = require('../utils/resultHeader');
+const User = require('../entities/User');
 
 // LV2 [GET] 取得教練列表：{url}/api/coaches/?per=?page=?word=?可以透過 query string 篩選資料。
 async function getCoaches(req, res, next) {
@@ -201,16 +202,45 @@ async function getCoachDetail(req, res, next) {
 }
 
 // 取得指定教練課程列表
-async function getCoursesByCoachId(req, res, next){
+async function getCoursesByCoachId(req, res, next) {
     try {
-        
+        const coachId = req.params.coachId
+
+        if (validCheck.isNotUUID(coachId)) {
+            resultHeader(res, 400, 'failed', { message: "欄位未填寫正確" })
+            return
+        }
+
+        const findCoach = await dataSource.getRepository('Coach').findOne({ where: { id: coachId }, relations: { User: true} })
+        if (!findCoach) {
+            resultHeader(res, 400, 'failed', { message: "找不到該教練" })
+            return
+        }
+
+        const findCourses = await dataSource.getRepository('Course').find({ where: { user_id: findCoach.user_id }, relations: { Skill: true} })
+
+        const courseData = []
+        findCourses.forEach(item => {
+            courseData.push({
+                id: item.id,
+                name: item.name,
+                skill_name: item.Skill.name,
+                coach_name: findCoach.User.name,
+                description: item.description,
+                start_at: item.start_at,
+                end_at: item.end_at,
+                meeting_url: item.meeting_url
+            })
+        })
+
+        resultHeader(res, 200, 'success', { data: courseData })
+
+
     } catch (error) {
         logger.error()
-        next(error)        
+        next(error)
     }
 }
-
-
 
 module.exports = {
     getCoaches,

@@ -25,10 +25,10 @@ router.put('/coaches/courses/:courseId', auth, isCoach, adminController.putCoach
 router.post('/coaches/:userId', auth, isAdmin, adminController.postCoach)
 
 // 取得教練自己的課程列表
-router.get('/courses', auth, isCoach, adminController.getCoachOwnCourses)
+router.get('/coaches/courses', auth, isCoach, adminController.getCoachOwnCourses)
 
 // 取得教練自己的課程詳細資料
-router.get('/courses/:courseId', auth, isCoach, adminController.getCoachOwnCourseDetail)
+router.get('/coaches/courses/:courseId', auth, isCoach, adminController.getCoachOwnCourseDetail)
 
 // 變更教練資料
 router.put('/', auth, isCoach, adminController.putCoachProfile)
@@ -36,8 +36,9 @@ router.put('/', auth, isCoach, adminController.putCoachProfile)
 // 取得教練自己的詳細資料
 router.get('/', auth, isCoach, adminController.putCoachProfile)
 
-// 取得教練自己的月營收資料
-router.get('/', auth, isCoach, adminController.getCoachSelfRevenue)
+// 取得教練自己的月營收資料 api/admin/coaches/revenue?month=
+
+router.get('/coaches/revenue', auth, isCoach, adminController.getCoachSelfRevenue)
 
 module.exports = router
 

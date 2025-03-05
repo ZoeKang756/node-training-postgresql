@@ -75,6 +75,6 @@ module.exports = new EntitySchema({
         referencedColumnName: 'id',
         foreignKeyConstraintName: 'course_skill_id_fk'
       }
-    }
+    },
   }
 })

@@ -22,4 +22,16 @@ module.exports = new EntitySchema({
       nullable: false
     }
   },
+  relations: {
+    CoachLinkSkill: {
+      target: 'CoachLinkSkill',
+      type: 'one-to-many',
+      inverseSide: 'Skill',
+      joinColumn: {
+        name: 'skill_id',
+        referencedColumnName: 'id',
+        foreignKeyConstraintName: 'skill_coach_link_skill_fk'
+      }
+    }
+  }
 })

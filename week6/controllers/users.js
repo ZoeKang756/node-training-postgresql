@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt')
-const { IsNull } = require('typeorm')
+const { In, IsNull } = require('typeorm')
 const config = require('../config/index')
 const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('UsersController')
@@ -53,7 +53,7 @@ async function postSignup(req, res, next) {
                 name: result.name
             }
         }
-        resultHeader(res, 200, 'successAA', { data: userData })
+        resultHeader(res, 200, 'success', { data: userData })
 
     } catch (error) {
         logger.error(error)
@@ -272,8 +272,25 @@ async function getBookingCourses(req, res, next) {
     try {
         const { id } = req.user
         const courseBookingRepo = dataSource.getRepository('CourseBooking')
-        const findCourseBooking = await courseBookingRepo.find({ where: { user_id: id, cancelled_at: IsNull()}, relations: { Course: true, User: true } })
+        const findCourseBooking = await courseBookingRepo.find({ where: { user_id: id, }, relations: { Course: true, User: true } })
 
+        // 取得課堂教練的user_id
+        const getCourseCoachUserId = []
+        findCourseBooking.forEach(item => {
+            if (!getCourseCoachUserId.includes(item.Course.user_id)) getCourseCoachUserId.push(item.Course.user_id)
+        })
+
+        // 取得課堂教練的user_name
+        const getCourseCoachUserName = []
+        if (getCourseCoachUserId.length) {
+            const findCoachUserData = await dataSource.getRepository('User').find({ select: ['id', 'name'], where: { id: In(getCourseCoachUserId) } })
+
+            findCoachUserData.forEach(item => {
+                getCourseCoachUserName[item.id] = item.name
+            })
+        }
+
+        // 取得有效預約堂數
         const usedBookingCount = await courseBookingRepo.count({
             where: {
                 user_id: id,
@@ -281,7 +298,7 @@ async function getBookingCourses(req, res, next) {
             }
         })
 
-
+        // 取得總購買合約堂數
         const creditPurchaseRepo = dataSource.getRepository('CreditPurchase')
         const userCreditSum = await creditPurchaseRepo.sum('purchased_credits', {
             user_id: id
@@ -295,7 +312,7 @@ async function getBookingCourses(req, res, next) {
 
         const bookingData = []
         findCourseBooking.forEach(item => {
-            // check status:TODO
+            // check status
             const start_date = new Date(item.Course.start_at);
             const end_date = new Date(item.Course.end_at);
 
@@ -307,16 +324,14 @@ async function getBookingCourses(req, res, next) {
                 item_status = 'COMPLETED'
             }
 
-
-
             bookingData.push({
                 name: item.Course.name,
                 course_id: item.course_id,
-                coach_name: item.User.name,
+                coach_name: getCourseCoachUserName[item.Course.user_id],
                 status: item_status,
                 start_at: item.Course.start_at,
                 end_at: item.Course.end_at,
-                meeting_url: item.meeting_url
+                meeting_url: item.Course.meeting_url
             })
         })
 

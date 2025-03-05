@@ -1,5 +1,6 @@
 
 const { dataSource } = require('../db/data-source')
+const { In, IsNull } = require('typeorm')
 const logger = require('../utils/logger')('AdminController')
 const validCheck = require('../utils/validCheck')
 const resultHeader = require('../utils/resultHeader');
@@ -72,7 +73,7 @@ async function postCoachCourse(req, res, next) {
 
         const courseRepo = dataSource.getRepository('Course')
         const newCourse = courseRepo.create({
-            user_id:id,
+            user_id: id,
             skill_id,
             name,
             description,
@@ -170,8 +171,7 @@ async function putCoachCourse(req, res, next) {
     }
 }
 
-// [POST] 將使用者變更為教練
-// profile_image_url 為非必填
+// [POST] 將使用者變更為教練, profile_image_url 為非必填
 async function postCoach(req, res, next) {
     try {
         const userId = req.params.userId
@@ -261,53 +261,147 @@ async function postCoach(req, res, next) {
     }
 }
 
-// 取得教練自己的課程列表
-async function getCoachOwnCourses(req, res, next){
+// 取得教練自己的課程列表 [isCoach]
+async function getCoachOwnCourses(req, res, next) {
     try {
-        
+        const { id } = req.user
+
+        //--取得課程資料--//
+        const courseRepo = dataSource.getRepository('Course')
+        const findCourse = await courseRepo.find({ where: { user_id: id } })
+
+        const getAllBookingCount = []
+        findCourse.forEach(item => {
+            getAllBookingCount[item.id] = 0
+        })
+
+
+        //--取得已報名人數--//
+        const courseBookingRepo = dataSource.getRepository('CourseBooking')
+        const findCourseBookingData = await courseBookingRepo.find({ select: ['course_id'], where: { course_id: In(Object.keys(getAllBookingCount)), cancelled_at: IsNull() } })
+
+        findCourseBookingData.forEach(item => {
+            getAllBookingCount[item.course_id]++
+        })
+
+
+        const courseData = []
+        findCourse.forEach(item => {
+            // check status
+            const start_date = new Date(item.start_at);
+            const end_date = new Date(item.end_at);
+
+            let item_status = '尚未開始'
+
+            if (start_date.getTime() < Date.now() && end_date.getTime() > Date.now()) {
+                item_status = '報名中'
+            } else if (end_date.getTime() <= Date.now()) {
+                item_status = '已結束'
+            }
+
+            courseData.push({
+                id: item.id,
+                status: item_status,
+                name: item.name,
+                start_at: item.start_at,
+                end_at: item.end_at,
+                max_participants: item.max_participants,
+                participants: getAllBookingCount[item.id]
+            })
+        })
+
+        resultHeader(res, 200, 'success', { data: courseData })
+
     } catch (error) {
         logger.error()
-        next(error)        
+        next(error)
     }
 }
 
-// 取得教練自己的課程詳細資料
-async function getCoachOwnCourseDetail(req, res, next){
+// 取得教練自己的課程詳細資料 [isCoach]
+async function getCoachOwnCourseDetail(req, res, next) {
     try {
-        
+        const { id } = req.user
+        const courseId = req.params.courseId
+
+        if (validCheck.isNotUUID(courseId)) {
+            resultHeader(res, 400, 'failed', { message: '欄位未填寫正確' })
+            return
+        }
+
+        //--取得課程資料--//
+        const courseRepo = dataSource.getRepository('Course')
+        const findCourse = await courseRepo.findOne({ where: { user_id: id, id: courseId }, relations: { Skill: true } })
+
+        if (!findCourse) {
+            resultHeader(res, 400, 'failed', { message: '課程id錯誤' })
+            return
+        }
+
+        //--取得已報名人數--//
+        const courseBookingRepo = dataSource.getRepository('CourseBooking')
+        const findCourseBookingCount = await courseBookingRepo.count({ where: { course_id: courseId, cancelled_at: IsNull() } })
+
+        // check status
+        const start_date = new Date(findCourse.start_at);
+        const end_date = new Date(findCourse.end_at);
+
+        let course_status = '尚未開始'
+
+        if (start_date.getTime() < Date.now() && end_date.getTime() > Date.now()) {
+            course_status = '報名中'
+        } else if (end_date.getTime() <= Date.now()) {
+            course_status = '已結束'
+        }
+
+        const courseData = {
+            id: findCourse.id,
+            status: course_status,
+            skill_name: findCourse.Skill.name,
+            name: findCourse.name,
+            description: findCourse.description,
+            start_at: findCourse.start_at,
+            end_at: findCourse.end_at,
+            max_participants: findCourse.max_participants,
+            participants: findCourseBookingCount
+        }
+
+        resultHeader(res, 200, 'success', { data: courseData })
+
+
     } catch (error) {
         logger.error()
-        next(error)        
+        next(error)
     }
 }
 
-// 變更教練資料
-async function putCoachProfile(req, res, next){
+// 變更教練資料 [isCoach]
+async function putCoachProfile(req, res, next) {
     try {
-        
+        const { id } = req.user
     } catch (error) {
         logger.error()
-        next(error)        
+        next(error)
     }
 }
 
-// 取得教練自己的詳細資料
-async function getCoachSelfDetail(req, res, next){
+// 取得教練自己的詳細資料 [isCoach]
+async function getCoachSelfDetail(req, res, next) {
     try {
-        
+        const { id } = req.user
     } catch (error) {
         logger.error()
-        next(error)        
+        next(error)
     }
 }
 
-// 取得教練自己的月營收資料
-async function getCoachSelfRevenue(req, res, next){
+// 取得教練自己的月營收資料 [isCoach]
+async function getCoachSelfRevenue(req, res, next) {
     try {
-        
+        const { id } = req.user
     } catch (error) {
         logger.error()
-        next(error)        
+        next(error)
     }
 }
 

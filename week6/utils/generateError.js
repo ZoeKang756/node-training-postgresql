@@ -7,7 +7,7 @@ const STATUS_MSG = {
     PERMISSION_INVALID:'無效的 token',
     PERMISSION_MISSING: '請先登入',
     FORBIDDEN_IS_NOT_COACH: '使用者尚未成為教練',
-    FORBIDDEN_IS_NOT_ADMIN: '使用者尚未成為'
+    FORBIDDEN_IS_NOT_ADMIN: '使用者不是管理員'
 }
 
 const init = (status, message)=> {
