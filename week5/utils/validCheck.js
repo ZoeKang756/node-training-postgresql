@@ -10,7 +10,7 @@ const validCheck = {
     },
     isNotNoSymbolString:function (value) 
     {
-        let pattren = /[^0-9a-zA-Z\\u4e00-\\u9fa5]/
+        let pattren = /^[0-9a-zA-Z\u4e00-\u9fa5]+$/
         return !pattren.test(value) || value.trim().length === 0 || value === ''  
     },
     isNotInteger:function (value) {
