@@ -4,7 +4,6 @@ const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('CourseController')
 const validCheck = require('../utils/validCheck')
 const resultHeader = require('../utils/resultHeader');
-const moment = require('moment');
 
 // [POST] 報名課程：{url}/api/courses/:courseId (使用者權限)
 async function post(req, res, next) {
@@ -26,9 +25,19 @@ async function post(req, res, next) {
         }
 
         //--檢查課程是否過期--//
-        const checkCourseDate = moment().isBetween(findCourse.start_at, findCourse.end_at)
+        // check status
+        const start_date = new Date(findCourse.start_at);
+        const end_date = new Date(findCourse.end_at);
 
-        if (!checkCourseDate) {
+        let accept_booking = true
+
+        if (start_date.getTime() < Date.now() && end_date.getTime() > Date.now()) {
+            accept_booking = true
+        } else if (end_date.getTime() <= Date.now()) {
+            accept_booking = false
+        }
+
+        if (!accept_booking) {
             resultHeader(res, 400, 'failed', { message: "該課程已經過期，無法報名!" })
             return
         }
@@ -42,7 +51,7 @@ async function post(req, res, next) {
         let courseTotalBooking = 0
 
         findCourseBooking.forEach(item => {
-            if (item.user_id === id && item.course_id === courseId && item.cancelled_at !== null) {
+            if (item.user_id === id && item.course_id === courseId && item.cancelled_at === null) {
                 isExtUserBooking = true
             }
 
@@ -152,7 +161,7 @@ async function deleteCoursesById(req, res, next) {
 
         findCourseBooking.forEach(item => {
             if (item.user_id === id && item.course_id === courseId) {
-                if (item.cancelled_at !== null) isBooking = true
+                if (item.cancelled_at === null) isBooking = true
                 else cancelledCount++
             }
         })
@@ -171,7 +180,7 @@ async function deleteCoursesById(req, res, next) {
             course_id: courseId,
             cancelled_at: IsNull()
         }, {
-            cancelled_at: moment().toISOString()
+            cancelled_at: new Date().toString()
         })
 
         if (delResult.affected === 0) {

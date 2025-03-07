@@ -270,7 +270,7 @@ async function getBookingCourses(req, res, next) {
     try {
         const { id } = req.user
         const courseBookingRepo = dataSource.getRepository('CourseBooking')
-        const findCourseBooking = await courseBookingRepo.find({ where: { user_id: id, }, relations: { Course: true, User: true } })
+        const findCourseBooking = await courseBookingRepo.find({ where: { user_id: id, cancelled_at: IsNull() }, relations: { Course: true, User: true } })
 
         // 取得課堂教練的user_id
         const getCourseCoachUserId = []

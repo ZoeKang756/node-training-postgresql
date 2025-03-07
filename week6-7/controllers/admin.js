@@ -1,13 +1,13 @@
 
 const { dataSource } = require('../db/data-source')
-const { Not, In, IsNull } = require('typeorm')
+const { Not, In, IsNull, Between } = require('typeorm')
 const logger = require('../utils/logger')('AdminController')
 const validCheck = require('../utils/validCheck')
 const resultHeader = require('../utils/resultHeader');
 const Coach = require('../entities/Coach');
 const User = require('../entities/User');
 const CoachLinkSkill = require('../entities/CoachLinkSkill');
-
+const getFormatDateRange = require('../utils/getFormatDateRange');
 
 // [POST] 新增教練課程資料
 async function postCoachCourse(req, res, next) {
@@ -23,10 +23,18 @@ async function postCoachCourse(req, res, next) {
         if (validCheck.isNotString(description)) errMsg.push('課程介紹為必填')
 
         if (validCheck.isNotString(start_at)) errMsg.push('課程開始時間為必填')
-        else if (validCheck.isNotDate(start_at)) errMsg.push('課程開始時間格式錯誤')
+        else if (validCheck.isNotDateTime(start_at)) errMsg.push('課程開始時間格式錯誤')
 
         if (validCheck.isNotString(end_at)) errMsg.push('課程結束時間為必填')
-        else if (validCheck.isNotDate(end_at)) errMsg.push('課程結束時間格式錯誤')
+        else if (validCheck.isNotDateTime(end_at)) errMsg.push('課程結束時間格式錯誤')
+
+        if (!validCheck.isNotDateTime(start_at) && !validCheck.isNotDateTime(end_at)) {
+            // --課程開始時間與課程結束時間不可為過去時間
+            if (new Date(start_at) < new Date() || new Date(end_at) < new Date()) errMsg.push('課程開始時間與課程結束時間不可為過去')
+
+            // --課程結束時間大於課程開始時間 
+            if (new Date(start_at) > new Date(end_at)) errMsg.push('課程結束時間必須大於課程開始時間')
+        }
 
         if (validCheck.isNotInteger(max_participants) || max_participants === 0) errMsg.push('最大上課人數為必填')
         if (meeting_url && validCheck.isNotUrl(meeting_url)) errMsg.push('線上直播網址URL格式錯誤')
@@ -36,20 +44,6 @@ async function postCoachCourse(req, res, next) {
             return
         }
 
-        //--檢查使用者id及是否為教練身分--//
-        const userRepo = dataSource.getRepository('User')
-        const findUser = await userRepo.findOne({
-            where: { id: id }
-        })
-
-        if (!findUser) {
-            resultHeader(res, 400, 'failed', { message: '使用者不存在' })
-            return
-        }
-        else if (findUser.role !== "COACH") {
-            resultHeader(res, 400, 'failed', { message: '使用者尚未成為教練' })
-            return
-        }
         //--檢查skill_id--// 
         const skillRepo = dataSource.getRepository('Skill')
         const findSkill = await skillRepo.findOne({
@@ -61,16 +55,19 @@ async function postCoachCourse(req, res, next) {
         }
 
         //--檢查教練是否有該技能--//
-        /*const coachLinkSkillRepo = dataSource.getRepository('CoachLinkSkill')
-        const findCoachLinkSkill = await coachLinkSkillRepo.find({
-            where: { skill_id: skill_id, coach_id: user_id }
+        const coachRepo = dataSource.getRepository('Coach')
+        const findCoach = await coachRepo.findOne({
+            where: { user_id: id }, relations: { CoachLinkSkill: true }
+        })
+        const coachSkillids = []
+        findCoach.CoachLinkSkill.forEach(item => {
+            coachSkillids.push(item.skill_id)
         })
 
-        if (!findCoachSkill.length) {
-            resultHeader(res, 400, 'failed', { message: '教練無相關技能' })
+        if (!coachSkillids.includes(skill_id)) {
+            resultHeader(res, 400, 'failed', { message: '教練無相關技能,無法開課!' })
             return
-        }*/
-
+        }
 
         const courseRepo = dataSource.getRepository('Course')
         const newCourse = courseRepo.create({
@@ -108,10 +105,18 @@ async function putCoachCourse(req, res, next) {
         if (validCheck.isNotString(description)) errMsg.push('課程介紹為必填')
 
         if (validCheck.isNotString(start_at)) errMsg.push('課程開始時間為必填')
-        else if (validCheck.isNotDate(start_at)) errMsg.push('課程開始時間格式錯誤')
+        else if (validCheck.isNotDateTime(start_at)) errMsg.push('課程開始時間格式錯誤')
 
         if (validCheck.isNotString(end_at)) errMsg.push('課程結束時間為必填')
-        else if (validCheck.isNotDate(end_at)) errMsg.push('課程結束時間格式錯誤')
+        else if (validCheck.isNotDateTime(end_at)) errMsg.push('課程結束時間格式錯誤')
+
+        if (!validCheck.isNotDateTime(start_at) && !validCheck.isNotDateTime(end_at)) {
+            // --課程開始時間與課程結束時間不可為過去時間
+            if (new Date(start_at) < new Date() || new Date(end_at) < new Date()) errMsg.push('課程開始時間與課程結束時間不可為過去')
+
+            // --課程結束時間大於課程開始時間 
+            if (new Date(start_at) > new Date(end_at)) errMsg.push('課程結束時間必須大於課程開始時間')
+        }
 
         if (validCheck.isNotInteger(max_participants) || max_participants === 0) errMsg.push('最大上課人數為必填')
         if (meeting_url && validCheck.isNotUrl(meeting_url)) errMsg.push('線上直播網址URL格式錯誤')
@@ -127,7 +132,7 @@ async function putCoachCourse(req, res, next) {
             where: { id: courseId, user_id: id }
         })
         if (!findCourse) {
-            resultHeader(res, 400, 'failed', { message: '該課程不存在' })
+            resultHeader(res, 400, 'failed', { message: id })
             return
         }
 
@@ -140,6 +145,23 @@ async function putCoachCourse(req, res, next) {
             resultHeader(res, 400, 'failed', { message: '該技能不存在' })
             return
         }
+
+        //--檢查教練是否有該技能--//
+        const coachRepo = dataSource.getRepository('Coach')
+        const findCoach = await coachRepo.findOne({
+            where: { user_id: id }, relations: { CoachLinkSkill: true }
+        })
+
+        const coachSkillids = []
+        findCoach.CoachLinkSkill.forEach(item => {
+            coachSkillids.push(item.skill_id)
+        })
+
+        if (!coachSkillids.includes(skill_id)) {
+            resultHeader(res, 400, 'failed', { message: '教練無相關技能,無法開課!' })
+            return
+        }
+
 
         const result = await courseRepo.update({
             id: courseId
@@ -556,10 +578,89 @@ async function getCoachSelfDetail(req, res, next) {
     }
 }
 
-// 取得教練自己的月營收資料 [isCoach]
+// 取得教練自己的月營收資料 [isCoach] api/admin/coaches/revenue/:year??month=
 async function getCoachSelfRevenue(req, res, next) {
     try {
+        const monthNames = [
+            'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+            'september', 'october', 'november', 'december'
+        ];
+
+        const total = {
+            participants: 0,
+            revenue: 0,
+            course_count: 0
+        }
+
         const { id } = req.user
+        const year = req.params.year || new Date().getUTCFullYear()
+        const monthStr = req.query.month.toLowerCase() || monthNames[new Date().getUTCMonth()]  // 預設本月份
+        const monNum = monthNames.indexOf(monthStr) + 1
+        const month = monNum.toString().padStart(2, 0)
+
+        if (month < 0) {
+            resultHeader(res, 400, 'failed', { message: '欄位未填寫正確' })
+            return
+        }
+
+        // 計算日期範圍--//
+        const base_date = `${year}-${month}-01`
+        const fullDateRange = getFormatDateRange(base_date)
+
+        const startDate = new Date(fullDateRange.start)
+        const endDate = new Date(fullDateRange.end)
+
+        //--取得符合區間課程ID的集合--//
+        const courseRepo = dataSource.getRepository('Course')
+        const findCourse = await courseRepo.createQueryBuilder('course')
+            .where('course.start_at >= :startDate', { startDate: startDate })
+            .andWhere('course.start_at <= :endDate', { endDate: endDate })
+            .andWhere('course.end_at >= :startDate', { startDate: startDate })
+            .andWhere('course.end_at <= :endDate', { endDate: endDate })
+            .andWhere('course.user_id = :user_id', { user_id: id })
+            .getMany();
+        const courseIds = findCourse.map(item => item.id)
+
+        if (!courseIds.length) {
+            resultHeader(res, 200, 'success', { data: { total: total } })
+            return
+        }
+
+        //--取得本月學員 Booking 數量(堂數)--//
+        const courseBookingRepo = dataSource.getRepository('CourseBooking')
+        const findCourseBooking = await courseBookingRepo.createQueryBuilder('course_booking')
+            .where('course_booking.cancelled_at IS NULL')
+            .andWhere('course_booking.course_id IN (:...courseIds)', { courseIds: courseIds })
+            .getMany();
+        const courseBookingCount = findCourseBooking.length
+
+        //--計算學員數--//   
+        //--計算實際開課堂數 (篩選沒有學員)--//    
+        const courseBookingUserIds = []
+        const activeCourseIds = []
+        findCourseBooking.forEach(item => {
+            if (!activeCourseIds.includes(item.course_id)) activeCourseIds.push(item.course_id)
+            if (!courseBookingUserIds.includes(item.user_id)) courseBookingUserIds.push(item.user_id)
+        })
+
+
+        //--計算單堂課價格--//
+        const creditPurchaseRepo = dataSource.getRepository('CreditPurchase')
+        const findCreditPurchase = await creditPurchaseRepo.createQueryBuilder('credit_purchase')
+            .select('SUM(purchased_credits)', 'total_credit_amount')
+            .addSelect('SUM(price_paid)', 'total_price')
+            .getRawOne()
+
+        const perCoursePrice = (findCreditPurchase.total_price / findCreditPurchase.total_credit_amount).toFixed(2)
+
+        total.participants = courseBookingUserIds.length
+        total.revenue = Math.floor(courseBookingCount * perCoursePrice)
+        total.course_count = activeCourseIds.length
+
+        resultHeader(res, 200, 'success', { data: { total: total } })
+        return
+
+
     } catch (error) {
         logger.error()
         next(error)

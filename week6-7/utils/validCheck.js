@@ -45,9 +45,10 @@ const validCheck = {
         let pattren = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         return !pattren.test(value);
     },
-    isNotDate:function(value) {
+    isNotDateTime:function(value) {
+        let pattren = /^(\d{4})(-|\/)(\d{2})\2(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
         let date = new Date(value)
-        return date.toString() === 'Invalid Date' || isNaN(date)     
+        return !pattren.test(value) || date.toString() === 'Invalid Date' || isNaN(date)     
     }   
 
 }

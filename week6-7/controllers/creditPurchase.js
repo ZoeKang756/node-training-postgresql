@@ -26,9 +26,9 @@ async function post(req, res, next) {
             return
         }
 
-        //--檢查是否重複購買--//
+        //--檢查是否重複購買(重複購買沒關係)--//
         const checkPurchaseRepo = dataSource.getRepository('CreditPurchase')
-        const checkPurchase = await checkPurchaseRepo.findOne({
+        /*const checkPurchase = await checkPurchaseRepo.findOne({
             where: {
                 credit_package_id: creditPackageId,
                 user_id: id
@@ -37,14 +37,13 @@ async function post(req, res, next) {
 
         if (checkPurchase) {
             resultHeader(res, 400, 'failed', { message: '購買方案重複' })
-            console.log(checkPurchase)
             return
-        }
+        }*/
 
         const newPurchase = checkPurchaseRepo.create({
             user_id: id,
             credit_package_id: findCreditPackage.id,
-            purchase_credits: findCreditPackage.credit_amount,
+            purchased_credits: findCreditPackage.credit_amount,
             price_paid: findCreditPackage.price
         })
         const saveResult = await checkPurchaseRepo.save(newPurchase)

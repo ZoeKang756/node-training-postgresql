@@ -27,7 +27,7 @@ async function post(req, res, next) {
 
     try {
         // 驗證資料正確性
-        if (validCheck.isUndefined(name) || validCheck.isNotString(name, 50) || (skillId && validCheck.isNotUUID(skillId))) {
+        if (validCheck.isUndefined(name) || validCheck.isNotString(name, 50) || (req.method === 'PUT' && validCheck.isNotUUID(skillId))) {
             resultHeader(res, 400, 'failed', { message: "欄位未填寫正確" })
             return
         }
@@ -36,8 +36,7 @@ async function post(req, res, next) {
         let checkSkillId = {}
 
         // 檢查 id 是否存在
-        if (skillId) {
-
+        if (req.method === 'PUT' && skillId) {
             checkSkillId = await skillRepo.findOne({ where: { id: skillId } })
             if (!checkSkillId) {
                 resultHeader(res, 400, 'failed', { message: "專長Id錯誤" })
@@ -46,13 +45,12 @@ async function post(req, res, next) {
         }
 
         // 檢查資料庫唯一值
-        const skillResult = await skillRepo.find({ where: { name: name } })
+        const skillResult = await skillRepo.findOne({ where: { name: name } })
 
-        if (skillResult.length > 0 && (!skillId || (skillId && !validCheck.isUndefined(checkSkillId.id) && checkSkillId.id !== skillId))) {
+        if ((skillResult && req.method === 'POST') || (req.method === 'PUT' && skillResult.id !== skillId)) {
             resultHeader(res, 409, 'failed', { message: "資料重複" })
             return
         }
-
 
         if (skillId) {
             const update = await skillRepo.update({ id: skillId }, { name })
@@ -115,7 +113,7 @@ async function deleteById(req, res, next) {
 
         const mapCoachId = []
         findCoachLinkSkill.forEach(item => {
-            if(!mapCoachId.includes(item.coach_id)) mapCoachId.push(item.coach_id)
+            if (!mapCoachId.includes(item.coach_id)) mapCoachId.push(item.coach_id)
         })
 
         const coachRepo = dataSource.getRepository('Coach')
