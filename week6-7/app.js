@@ -11,6 +11,7 @@ const usersRouter = require('./routes/users')
 const adminRouter = require('./routes/admin')
 const coursesRouter = require('./routes/courses')
 const creditPurchaseRouter = require('./routes/creditPurchase')
+const uploadRouter = require('./routes/upload')
 
 const resultHeader = require('./utils/resultHeader');
 
@@ -41,6 +42,7 @@ app.use('/api/coaches', coachRouter)
 
 app.use('/api/courses', coursesRouter)
 app.use('/api/credit-purchase', creditPurchaseRouter)
+app.use('/api/upload', uploadRouter)
 
 app.use((req,res,next)=>{
   resultHeader(res, 404, 'failed', {message:"無此網站路由"})

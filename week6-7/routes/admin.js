@@ -39,6 +39,7 @@ router.get('/coaches', auth, isCoach, adminController.getCoachSelfDetail)
 // 取得教練自己的月營收資料 api/admin/coaches/revenue?month=
 router.get('/coaches/revenue/:year?', auth, isCoach, adminController.getCoachSelfRevenue)
 
+
 module.exports = router
 
 
