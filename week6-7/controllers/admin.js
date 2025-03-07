@@ -667,6 +667,16 @@ async function getCoachSelfRevenue(req, res, next) {
     }
 }
 
+// Firebase 圖片上傳
+async function uploadSingle(req, res, next){
+    try {
+        
+    } catch (error) {
+        logger.error()
+        next(error)      
+    }
+}
+
 
 module.exports = {
     postCoachCourse,
