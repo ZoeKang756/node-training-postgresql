@@ -1,6 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const os = require('os');
 
 const { dataSource } = require('../db/data-source')
 const config = require('../config/index')
@@ -34,10 +33,22 @@ async function uploadSingle(req, res, next) {
         const form = formidable.formidable({
             multiple: false,
             maxFileSize: config.get('web.imageUpload.MAX_FILE_SIZE'),
-            filter: ({ mimetype }) => {
-                return !!config.get('web.imageUpload.ALLOWED_FILE_TYPES')[mimetype]
+            filter: ({mimetype}) => {
+                const ALLOWED_FILE_TYPES =config.get('web.imageUpload.ALLOWED_FILE_TYPES')              
+                if (!ALLOWED_FILE_TYPES.includes(mimetype)) {
+                    resultHeader(res, 400, 'failed', {message:"不支援的檔案格式"})
+                    return
+                }
+                return mimetype && ALLOWED_FILE_TYPES.includes(mimetype)
             }
         })
+        
+        form.on('error', (error) => {
+            if(error.httpCode === 413)
+                resultHeader(res, 413, 'failed', {message:"檔案已超過限制大小!"})
+                return
+        })
+
         const [fields, files] = await form.parse(req)
 
         const filePath = files.file[0].filepath // file 是表單的欄位值
@@ -49,8 +60,6 @@ async function uploadSingle(req, res, next) {
             expires: Date.now() + 24 * 60 * 60 * 1000
         }
         const [imageUrl] = await bucket.file(remoteFilePath).getSignedUrl(options)
-
-        // `${location.protocol}://${location.host}:${location.port}/upload`
 
         resultHeader(res, 200, 'success', { data: { image_url: imageUrl } })
 
@@ -78,10 +87,22 @@ async function LocalUploadSingle(req, res, next) {
         const form = formidable.formidable({
             multiple: false,
             maxFileSize: config.get('web.imageUpload.MAX_FILE_SIZE'),
-            filter: ({ mimetype }) => {
-                return !!config.get('web.imageUpload.ALLOWED_FILE_TYPES')[mimetype]
+            filter: ({mimetype}) => {
+                const ALLOWED_FILE_TYPES =config.get('web.imageUpload.ALLOWED_FILE_TYPES')              
+                if (!ALLOWED_FILE_TYPES.includes(mimetype)) {
+                    resultHeader(res, 400, 'failed', {message:"不支援的檔案格式"})
+                    return
+                }
+                return mimetype && ALLOWED_FILE_TYPES.includes(mimetype)
             }
         })
+
+        form.on('error', (error) => {
+            if(error.httpCode === 413)
+                resultHeader(res, 413, 'failed', {message:"檔案已超過限制大小!"})
+                return
+        })
+
         const [fields, files] = await form.parse(req)
         const filePath = files.file[0].filepath
 
@@ -94,9 +115,9 @@ async function LocalUploadSingle(req, res, next) {
 
         fs.rename(filePath, remoteFilePath, (err) => {
             if (err) {
-                resultHeader(res, 400, 'failed', { message: err.message })
-                return
-
+                const error = new Error(err.message)
+                error.statusCode = 400
+                throw error
             }
 
             if (!fs.existsSync(remoteFilePath)) {
