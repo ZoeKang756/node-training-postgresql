@@ -32,7 +32,8 @@ const validCheck = {
         return !pattren.test(value)
     },
     isNotJpg:function (value) {
-        let pattren = /(i).jpg$/
+        // let pattren = /(i).(jpg|jpeg)$/ 
+        let pattren = /[^\s]+(.*?).(jpg|jpeg|JPG|JPEG)$/
         return !pattren.test(value)
     },
     isNotVaildStrLen:function(value, min =0, max =0){

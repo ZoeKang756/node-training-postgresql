@@ -1,6 +1,6 @@
+const fs = require('fs')
 const path = require('path')
-const fs = require('fs')
-const fs = require('fs')
+const os = require('os');
 
 const { dataSource } = require('../db/data-source')
 const config = require('../config/index')
@@ -33,22 +33,24 @@ async function uploadSingle(req, res, next) {
 
         const form = formidable.formidable({
             multiple: false,
-            maxFileSize: config.get(web.imageUpload.MAX_FILE_SIZE),
+            maxFileSize: config.get('web.imageUpload.MAX_FILE_SIZE'),
             filter: ({ mimetype }) => {
-                return !!config.get(web.imageUpload.ALLOWED_FILE_TYPES)[mimetype]
+                return !!config.get('web.imageUpload.ALLOWED_FILE_TYPES')[mimetype]
             }
         })
         const [fields, files] = await form.parse(req)
-        const filePath = files.file[0].filepath
 
+        const filePath = files.file[0].filepath // file 是表單的欄位值
         const remoteFilePath = `images/${new Date().toISOString()}-${files.file[0].originalFilename}`
-
         await bucket.upload(filePath, { destination: remoteFilePath })
+
         const options = {
             action: 'read',
             expires: Date.now() + 24 * 60 * 60 * 1000
         }
         const [imageUrl] = await bucket.file(remoteFilePath).getSignedUrl(options)
+
+        // `${location.protocol}://${location.host}:${location.port}/upload`
 
         resultHeader(res, 200, 'success', { data: { image_url: imageUrl } })
 
@@ -62,7 +64,7 @@ async function uploadSingle(req, res, next) {
 async function LocalUploadSingle(req, res, next) {
     try {
         const { id } = req.user
-        const uploadDir = path.join(__dirname,'public/coach');
+        const uploadDir = path.join(__dirname, '../upload')
 
         //--檢查使用者--//
         const coachRepo = dataSource.getRepository('Coach')
@@ -75,20 +77,36 @@ async function LocalUploadSingle(req, res, next) {
 
         const form = formidable.formidable({
             multiple: false,
-            maxFileSize: config.get(web.imageUpload.MAX_FILE_SIZE),
+            maxFileSize: config.get('web.imageUpload.MAX_FILE_SIZE'),
             filter: ({ mimetype }) => {
-                return !!config.get(web.imageUpload.ALLOWED_FILE_TYPES)[mimetype]
+                return !!config.get('web.imageUpload.ALLOWED_FILE_TYPES')[mimetype]
             }
         })
         const [fields, files] = await form.parse(req)
         const filePath = files.file[0].filepath
 
-        const remoteFileName =  `${new Date().toISOString()}-${files.file[0].originalFilename}`
-        const remoteFilePath = path.join(uploadDir,`images/${remoteFileName}`)
+        const remoteFileName = `${Date.now()}-${files.file[0].originalFilename}`
+        const remoteFilePath = path.join(uploadDir, `${remoteFileName}`)
 
-        fs.rename(filePath, remoteFilePath)
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true })
+        }
 
-        resultHeader(res, 200, 'success', { data: { image_url: remoteFileName } })
+        fs.rename(filePath, remoteFilePath, (err) => {
+            if (err) {
+                resultHeader(res, 400, 'failed', { message: err.message })
+                return
+
+            }
+
+            if (!fs.existsSync(remoteFilePath)) {
+                resultHeader(res, 400, 'failed', { message: '檔案上傳失敗' })
+            } else {
+                resultHeader(res, 200, 'success', { data: { image_url: `${remoteFileName}` } })
+            }
+
+        })
+
 
     } catch (error) {
         logger.error()
@@ -97,14 +115,20 @@ async function LocalUploadSingle(req, res, next) {
 }
 
 // 圖片網址更新
-async function uploadSave(req, res, next) {
+async function saveFileName(req, res, next) {
     try {
         const { id } = req.user
         const { image_url } = req.body
+        const type = req.params.type
 
         const errMsg = []
-        if (validCheck.isNotUrl(profile_image_url)) errMsg.push('請輸入正確的大頭貼網址')
-        if (validCheck.isNotPng(profile_image_url) && validCheck.isNotJpg(profile_image_url)) errMsg.push('大頭貼須為.png, .jpg格式')
+        if (type === 'remote' && validCheck.isNotUrl(image_url)) errMsg.push('請輸入正確的大頭貼網址')
+        if (validCheck.isNotPng(image_url) && validCheck.isNotJpg(image_url)) errMsg.push('大頭貼須為.png, .jpg格式')
+
+        if (type !== 'remote') {
+            const file_location = path.join(__dirname, '../upload', image_url)
+            if (!fs.existsSync(file_location)) errMsg.push('圖片檔案不存在')
+        }
 
         if (errMsg.length > 0) {
             resultHeader(res, 400, 'failed', { message: '欄位未填寫正確', info: errMsg })
@@ -142,5 +166,7 @@ async function uploadSave(req, res, next) {
 
 
 module.exports = {
-    uploadSingle
+    uploadSingle,
+    LocalUploadSingle,
+    saveFileName
 }

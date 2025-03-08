@@ -32,7 +32,8 @@ async function postCreditPackage(req, res, next) {
         if (validCheck.isUndefined(name) || validCheck.isNotString(name, 50)) errMsg.push('購買方案名稱為必填,長度為50')
         if (validCheck.isUndefined(credit_amount) || validCheck.isNotInteger(credit_amount)) errMsg.push('購買方案的課堂數為必填,且為整數')
         if (validCheck.isUndefined(price) || validCheck.isNotNumeric(price)) errMsg.push('購買方案價格為必填,且為數字')
-        if (!validCheck.isUndefined(packageId) && validCheck.isNotUUID(packageId)) errMsg.push('組合包方案ID錯誤')
+
+        if(req.method === 'PUT' && validCheck.isNotUUID(packageId))  errMsg.push('組合包方案ID錯誤')
 
         if (errMsg.length > 0) {
             resultHeader(res, 400, 'failed', { message: "欄位未填寫正確", info: errMsg })
@@ -53,14 +54,14 @@ async function postCreditPackage(req, res, next) {
         }
 
         // 檢查資料庫唯一值
-        const packageData = await creditPackageRepo.find({ where: { name: name } })
+        const packageData = await creditPackageRepo.findOne({ where: { name: name } })
 
-        if (packageData.length > 0 && (!packageId || (packageId && !validCheck.isUndefined(checkPackage.id) && checkPackage.id !== packageId))) {
-            resultHeader(res, 409, 'failed', { message: `資料重複` })
+        if ((packageData && req.method === 'POST') || (req.method === 'PUT' && packageData.id !== packageId)) {
+            resultHeader(res, 409, 'failed', { message: "資料重複" })
             return
         }
 
-
+    
 
         if (packageId) // 這裡是編輯
         {

@@ -460,12 +460,12 @@ async function putCoachProfile(req, res, next) {
         findCourse.forEach(item => {
             canNotdeleteItem[item.Skill.id] = item.Skill.name
         })
-
+        /*
         if (Object.keys(canNotdeleteItem).length > 0) {
             resultHeader(res, 400, 'failed', { message: "已有相關開課資訊的技能，不可刪除!", info: canNotdeleteItem })
             return
         }
-
+        */
         // --需要增加到資料表的技能--//
         const insertSkill = skill_ids.filter((id) => !existSkillId.includes(id));
 

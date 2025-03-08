@@ -52,7 +52,7 @@ async function post(req, res, next) {
             return
         }
 
-        if (skillId) {
+        if (skillId) { // 這裡是編輯
             const update = await skillRepo.update({ id: skillId }, { name })
 
             if (!update.affected) {
