@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: false }))
 app.use(pinoHttp({
   logger,
   serializers: {
-    req (req) {
+    req(req) {
       req.body = req.raw.body
       return req
     }
@@ -44,14 +44,18 @@ app.use('/api/courses', coursesRouter)
 app.use('/api/credit-purchase', creditPurchaseRouter)
 app.use('/api/upload', uploadRouter)
 
-app.use((req,res,next)=>{
-  resultHeader(res, 404, 'failed', {message:"無此網站路由"})
+app.use((req, res, next) => {
+  resultHeader(res, 404, 'failed', { message: "無此網站路由" })
 })
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   req.log.error(err)
-  resultHeader(res, 500, 'failed', {message:"伺服器錯誤"})
+  if (err.status) {
+    resultHeader(res, 401, 'failed', { message: err.message })
+    return
+  }
+  resultHeader(res, 500, 'failed', { message: "伺服器錯誤" })
 })
 
 module.exports = app
