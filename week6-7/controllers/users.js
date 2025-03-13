@@ -9,7 +9,10 @@ const resultHeader = require('../utils/resultHeader');
 
 async function postSignup(req, res, next) {
     try {
-        const { name, email, password } = req.body
+        const  name  = req.body.name !== undefined ? req.body.name : ''
+        const  email  = req.body.email !== undefined ? req.body.email : ''
+        const  password  = req.body.password !== undefined ? req.body.password : ''
+
         const errMsg = []
 
         //驗證資料正確性 
@@ -61,7 +64,9 @@ async function postSignup(req, res, next) {
 
 async function postLogin(req, res, next) {
     try {
-        const { email, password } = req.body
+        const  email  = req.body.email !== undefined ? req.body.email : ''
+        const  password  = req.body.password !== undefined ? req.body.password : ''
+
 
         //--驗證資料正確性--//
         const errMsg = []
@@ -135,13 +140,13 @@ async function getProfile(req, res, next) {
 async function putProfile(req, res, next) {
     try {
         const { id } = req.user
-        const { name } = req.body
+        const  name  = req.body.name !== undefined ? req.body.name : ''
 
         const errMsg = []
 
         //驗證資料正確性 
         if (validCheck.isNotNoSymbolString(name)) errMsg.push('使用者名稱不可包含任何特殊符號與空白')
-        if (validCheck.isNotVaildStrLen(name, 2, 10)) errMsg.push('使用者名稱最少2個字，最多10個字')
+        if (validCheck.isNotVaildStrLen(name, 2, 10) || validCheck.isUndefined(name)) errMsg.push('使用者名稱最少2個字，最多10個字')
 
         if (errMsg.length > 0) {
             resultHeader(res, 400, 'failed', { message: '欄位未填寫正確', info: errMsg })

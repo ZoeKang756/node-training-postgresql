@@ -11,7 +11,7 @@ const validCheck = {
     isNotNoSymbolString:function (value) 
     {
         let pattren = /^[0-9a-zA-Z\u4e00-\u9fa5]+$/
-        return !pattren.test(value) || value.trim().length === 0 || value === ''  
+        return !pattren.test(value) || value.trim().length === 0 || value === ''
     },
     isNotInteger:function (value) {
         return typeof value !== 'number' || value < 0 || value % 1 !== 0
@@ -28,16 +28,15 @@ const validCheck = {
        return !pattren.test(value) 
     },
     isNotPng:function (value) {
-        let pattren = /(i).png$/
+        let pattren = /[^\s]+(.*?).(png|PNG)$/
         return !pattren.test(value)
     },
     isNotJpg:function (value) {
-        // let pattren = /(i).(jpg|jpeg)$/ 
         let pattren = /[^\s]+(.*?).(jpg|jpeg|JPG|JPEG)$/
         return !pattren.test(value)
     },
     isNotVaildStrLen:function(value, min =0, max =0){
-        return (value.length > max || value.length < min)
+        return (value.length > max || value.length < min)   
     },
     isNotPwd:function(value, pwdPattern){
         return !pwdPattern.test(value)

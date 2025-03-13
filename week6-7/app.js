@@ -50,12 +50,18 @@ app.use((req, res, next) => {
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  req.log.error(err)
-  if (err.status) {
-    resultHeader(res, 401, 'failed', { message: err.message })
+  try {
+    req.log.error(err)
+    if (err.status) {
+      resultHeader(res, 401, 'failed', { message: err.message })
+      return
+    }
+    resultHeader(res, 500, 'error', { message: "伺服器錯誤" })
+  } catch (error) {
+    logger.error(error)
+    resultHeader(res, 500, 'error', { message: "伺服器錯誤" })
     return
   }
-  resultHeader(res, 500, 'failed', { message: "伺服器錯誤" })
 })
 
 module.exports = app

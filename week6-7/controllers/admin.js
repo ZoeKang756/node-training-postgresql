@@ -132,7 +132,7 @@ async function putCoachCourse(req, res, next) {
             where: { id: courseId, user_id: id }
         })
         if (!findCourse) {
-            resultHeader(res, 400, 'failed', { message: id })
+            resultHeader(res, 400, 'failed', { message: "錯誤的課程id" })
             return
         }
 
